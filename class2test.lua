@@ -1,9 +1,9 @@
 local class = require "class2"
 
 local IContainer = class.interface "IContainer" {
-	push = "function",
-	pop = "function",
-	count = "var"
+    push = "function",
+    pop = "function",
+    count = "var"
 }
 
 local Array
@@ -13,18 +13,18 @@ Array = class.class "Array" {implements = {IContainer}} {
         size = 0
     },
     new = function(a, b)
-		if class.instanceof(a, Array) and b == nil then
-			for i,v in ipairs(a.tab) do tab[i] = v end
-			size = #tab
-		elseif type(a) == "table" and b == nil then
-			for i,v in ipairs(a) do tab[i] = v end
-			size = #tab
-		elseif type(a) == "number" and (b == nil or type(b) == "number") then
-			for i = 1, a do tab[i] = b or 0 end
-			size = a
-		elseif a ~= nil or b ~= nil then
-			error("invalid constructor with types (" .. type(a) .. ", " .. type(b) .. ")", 2)
-		end
+        if class.instanceof(a, Array) and b == nil then
+            for i,v in ipairs(a.tab) do tab[i] = v end
+            size = #tab
+        elseif type(a) == "table" and b == nil then
+            for i,v in ipairs(a) do tab[i] = v end
+            size = #tab
+        elseif type(a) == "number" and (b == nil or type(b) == "number") then
+            for i = 1, a do tab[i] = b or 0 end
+            size = a
+        elseif a ~= nil or b ~= nil then
+            error("invalid constructor with types (" .. type(a) .. ", " .. type(b) .. ")", 2)
+        end
     end,
     public = {
         meta = {
