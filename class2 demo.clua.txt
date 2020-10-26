@@ -1,0 +1,105 @@
+interface IContainer
+	function push
+	function pop
+	var count
+end
+
+class Array implements IContainer
+	private var tab = {}
+	private var size = 0
+
+	new(a, b)
+		if class.instanceof(a, Array) and b == nil then
+			for i,v in ipairs(a.tab) do tab[i] = v end
+			size = #tab
+		elseif type(a) == "table" and b == nil then
+			for i,v in ipairs(a) do tab[i] = v end
+			size = #tab
+		elseif type(a) == "number" and (b == nil or type(b) == "number") then
+			for i = 1, a do tab = b or 0 end
+			size = a
+		elseif a ~= nil or b ~= nil then
+			error("invalid constructor with types (" .. type(a) .. ", " .. type(b) .. ")", 2)
+		end
+	end
+
+	public meta function __index(idx)
+		if type(idx) ~= "number" then error("bad argument #1 (expected number, got " .. type(idx) .. ")", 2) end
+		if idx < 1 or idx > #tab then error("bad argument #1 (index out of range)", 2) end
+		return tab[idx]
+	end
+	public meta function __newindex(idx, val)
+		if type(idx) ~= "number" then error("bad argument #1 (expected number, got " .. type(idx) .. ")", 2) end
+		if idx < 1 or idx > #tab then error("bad argument #1 (index out of range)", 2) end
+		tab[idx] = val
+	end
+	public meta function __ipairs()
+		return ipairs(tab)
+	end
+	public meta function __pairs()
+		return ipairs(tab)
+	end
+
+	public function push_back(val)
+		tab[size + 1] = val
+		size = size + 1
+	end
+	public function pop_back()
+		if size < 1 then error("attempted to pop empty array", 2) end
+		local val = tab[size]
+		tab[size] = nil
+		size = size - 1
+		return val
+	end
+	public function push_front(val)
+		table.insert(tab, 1, val)
+		size = size + 1
+	end
+	public function pop_front()
+		if size < 1 then error("attempted to pop empty array", 2) end
+		size = size + 1
+		return table.remove(tab, 1)
+	end
+	public function insert(pos, val)
+		if pos < 1 or pos > size + 1 then error("bad argument #1 (index out of range)", 2) end
+		table.insert(tab, pos, val)
+		size = size + 1
+	end
+	public function erase(pos)
+		if pos < 1 or pos > size then error("bad argument #1 (index out of range)", 2) end
+		local val = table.remove(tab, pos)
+		size = size - 1
+		return val
+	end
+	public function clear()
+		self.tab = {}
+		self.size = 0
+	end
+
+	-- MARK: IContainer
+	public var count {
+		get
+			return size
+		end
+	}
+	public function push(val)
+		return push_back(val)
+	end
+	public function pop()
+		return pop_back(val)
+	end
+
+	static function combine(a, b)
+		if not class.instanceof(a, Array) then error("bad argument #1 (expected Array, got " .. (class.typeof(a) or type(a)) .. ")", 2) end
+		if not class.instanceof(b, Array) then error("bad argument #2 (expected Array, got " .. (class.typeof(b) or type(b)) .. ")", 2) end
+		local c = Array(a)
+		for i = 1, b.count do c.push_back(b[i]) end
+		return c
+	end
+end
+
+local a = Array {7, 1, 4, 9}
+for i, v in ipairs(a) do io.write(i .. " => " .. v .. "\n") end
+local b = Array.combine(a, Array(3, 12))
+for i = 1, b.count do io.write(b[i] .. ", ") end
+io.write("\n")
