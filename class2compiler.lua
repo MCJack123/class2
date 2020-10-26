@@ -1,3 +1,6 @@
+-- THIS IS BROKEN FOR NOW, DO NOT USE.
+-- Will actually finish at some point in the future.
+
 local parseClassDefinition, parseLuaBlock
 
 local undefined = {}
