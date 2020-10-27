@@ -162,9 +162,9 @@ function parseClassDefinition(code, name, line)
             assert(args, name .. ":" .. line .. ": '(' expected near '" .. (code:match("^%S+", pos) or "<eof>") .. "'")
             class[nextparams[2] or "private"][t][nextparams[1]] = {args = args}
             local a
-            print("entering function " .. nextparams[1])
+            --print("entering function " .. nextparams[1])
             class[nextparams[2] or "private"][t][nextparams[1]].block, a, line = parseLuaBlock(code:sub(e), name, line, true)
-            print("exiting function " .. nextparams[1])
+            --print("exiting function " .. nextparams[1])
             e = e + a
             state, nextparams = "block", {}
             code:sub(pos, e):gsub("\n", function() line = line + 1 end)
@@ -174,9 +174,9 @@ function parseClassDefinition(code, name, line)
             assert(args, name .. ":" .. line .. ": '(' expected near '" .. (code:match("^%S+") or "<eof>") .. "'")
             class.constructor = {args = args}
             local a
-            print("entering ctor")
+            --print("entering ctor")
             class.constructor.block, a, line = parseLuaBlock(code:sub(e), name, line, true)
-            print("exiting ctor")
+            --print("exiting ctor")
             e = e + a
             state, nextparams = "block", {}
             code:sub(pos, e):gsub("\n", function() line = line + 1 end)
@@ -345,15 +345,15 @@ function parseInterfaceDefinition(code, name, line)
             end
             state, nextparams = nextparams[2], {}
         elseif state == "function" then
-            print(nextparams[1])
+            --print(nextparams[1])
             if code:match("^%(", pos) then
                 local args, e = code:match("^(%b())%s*()%S", pos)
                 assert(args, name .. ":" .. line .. ": '(' expected near '" .. (code:match("^%S+", pos) or "<eof>") .. "'")
                 interface.default_methods[nextparams[1]] = {args = args}
                 local a
-                print("entering function " .. nextparams[1])
+                --print("entering function " .. nextparams[1])
                 interface.default_methods[nextparams[1]].block, a, line = parseLuaBlock(code:sub(e), name, line, true)
-                print("exiting function " .. nextparams[1])
+                --print("exiting function " .. nextparams[1])
                 e = e + a
                 state, nextparams = "block", {}
                 code:sub(pos, e):gsub("\n", function() line = line + 1 end)
@@ -424,9 +424,9 @@ function parseLuaBlock(code, name, line, requireEnd)
                 else error(name .. ":" .. line .. ": '<eof>' expected near 'end'", 2) end
             elseif (pos == 6 and current:match("^class[^%w_%.]$")) or (code:sub(pos-#current, pos-#current) .. current):match("^[^%w_]class[^%w_%.]$") then
                 output = output .. code:sub(chunk_start, pos - 6)
-                print("entering class block")
+                --print("entering class block")
                 local r, p, l = parseClassDefinition(code:sub(pos - 5), name, line)
-                print("exiting class block")
+                --print("exiting class block")
                 output = output .. r
                 pos = pos + p - 5
                 chunk_start = pos
@@ -434,9 +434,9 @@ function parseLuaBlock(code, name, line, requireEnd)
                 current = ""
             elseif (pos == 10 and current:match("^interface[^%w_%.]$")) or (code:sub(pos-#current, pos-#current) .. current):match("^[^%w_]interface[^%w_%.]$") then
                 output = output .. code:sub(chunk_start, pos - 10)
-                print("entering interface block")
+                --print("entering interface block")
                 local r, p, l = parseInterfaceDefinition(code:sub(pos - 9), name, line)
-                print("exiting interface block")
+                --print("exiting interface block")
                 output = output .. r
                 pos = pos + p - 9
                 chunk_start = pos
@@ -444,9 +444,9 @@ function parseLuaBlock(code, name, line, requireEnd)
                 current = ""
             elseif (pos == 9 and current:match("^protocol[^%w_%.]$")) or (code:sub(pos-#current, pos-#current) .. current):match("^[^%w_]protocol[^%w_%.]$") then
                 output = output .. code:sub(chunk_start, pos - 9)
-                print("entering protocol block")
+                --print("entering protocol block")
                 local r, p, l = parseInterfaceDefinition(code:sub(pos - 8), name, line)
-                print("exiting protocol block")
+                --print("exiting protocol block")
                 output = output .. r
                 pos = pos + p - 8
                 chunk_start = pos
@@ -469,7 +469,7 @@ function parseLuaBlock(code, name, line, requireEnd)
                     if km and k ~= "elseif" then
                         found = true
                         if (#k == 1 or (code:sub(pos-#current, pos-#current) .. current):match("^[^%w_]" .. k .. "[^%w_]$")) and k ~= "class" and k ~= "interface" and k ~= "protocol" then
-                            print("pushed " .. k .. " at " .. pos .. " (" .. line .. ")")
+                            --print("pushed " .. k .. " at " .. pos .. " (" .. line .. ")")
                             stack.n = stack.n + 1
                             stack[stack.n] = k
                             current = ""
@@ -480,7 +480,7 @@ function parseLuaBlock(code, name, line, requireEnd)
                         if #v == 1 or (code:sub(pos-#current, pos-#current) .. current):match("^[^%w_]" .. v .. "[^%w_]$") then
                             if stack.n == 0 then error(name .. ":" .. line .. ": '<eof>' expected near '" .. current:sub(1, -2) .. "'", 2)
                             elseif k == stack[stack.n] or (v == "elseif" and stack[stack.n] == "then") then
-                                print("popped " .. v .. " at " .. pos .. " (" .. line .. ")")
+                                --print("popped " .. v .. " at " .. pos .. " (" .. line .. ")")
                                 stack[stack.n] = nil
                                 stack.n = stack.n - 1
                                 current = ""
