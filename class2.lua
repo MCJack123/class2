@@ -39,18 +39,22 @@ end
 -- Internal function to call a method of an object, setting the self environment variable and other variables
 local function call_method(obj, fn, ...)
     -- get new object pointers for private data
-    local self = setmetatable({}, setmetatable({
-        __index = function(_, key)
-            if privateData[obj].__keys[key] then return privateData[obj][key]
-            else return obj[key] end
-        end,
-        __newindex = function(_, key, value)
-            if privateData[obj].__keys[key] then
-                if type(privateData[obj][key]) == "function" then error("attempt to change value of member function '" .. key .. "'", 2) end
-                privateData[obj][key] = value
-            else obj[key] = value end
-        end
-    }, {__index = getmetatable(obj)}))
+    local selfmt = {}
+    for k,v in pairs(getmetatable(obj)) do selfmt[k] = v end
+    for k,v in pairs(privateData[obj].__meta) do selfmt[k] = v end
+    selfmt.__index = function(_, key)
+        if privateData[obj].__keys[key] then return privateData[obj][key]
+        elseif privateData[obj].__meta.__index then return privateData[obj].__meta.__index(_, key)
+        else return obj[key] end
+    end
+    selfmt.__newindex = function(_, key, value)
+        if privateData[obj].__keys[key] then
+            if type(privateData[obj][key]) == "function" then error("attempt to change value of member function '" .. key .. "'", 2) end
+            privateData[obj][key] = value
+        elseif privateData[obj].__meta.__newindex then return privateData[obj].__meta.__newindex(_, key, value)
+        else obj[key] = value end
+    end
+    local self = setmetatable({}, selfmt)
     -- set up environment
     local env
     env = setmetatable({
@@ -97,6 +101,7 @@ local function call_method(obj, fn, ...)
                         return super
                     end
                 })
+                return s
             else return _ENV[key] end
         end,
         __newindex = function(e, key, value)
@@ -247,7 +252,30 @@ local function create_class(bodyPublic, name, inheritance, body)
             if static.properties[idx] == NIL then return nil
             else return static.properties[idx] end
         elseif static.methods[idx] ~= nil then
-            return static.methods[idx]
+            return function(...)
+                local args = table.pack(...)
+                for i = 1, args.n do
+                    if type(args[i]) == "table" then
+                        local mt = getmetatable(args[i])
+                        if mt and mt.__class == class_obj and mt.__type == name and privateData[args[i]] ~= nil then
+                            local o = args[i]
+                            args[i] = setmetatable({}, setmetatable({
+                                __index = function(_, key)
+                                    if privateData[o].__keys[key] then return privateData[o][key]
+                                    else return o[key] end
+                                end,
+                                __newindex = function(_, key, value)
+                                    if privateData[o].__keys[key] then
+                                        if type(privateData[o][key]) == "function" then error("attempt to change value of member function '" .. tostring(key) .. "'", 2) end
+                                        privateData[o][key] = value
+                                    else o[key] = value end
+                                end
+                            }, {__index = mt}))
+                        end
+                    end
+                end
+                return static.methods[idx](table.unpack(args, 1, args.n))
+            end
         elseif static.dynamic[idx] ~= nil then
             return static.dynamic[idx].get()
         elseif public.methods[idx] ~= nil then
@@ -276,7 +304,7 @@ local function create_class(bodyPublic, name, inheritance, body)
         local object = setmetatable({}, object_mt)
         local shadowData = {}
         local priv
-        priv = setmetatable({__keys = {}}, {
+        priv = setmetatable({__keys = {}, __meta = {}}, {
             __index = function(_, idx)
                 if protected.methods[idx] ~= nil then
                     return function(...)
@@ -331,13 +359,23 @@ local function create_class(bodyPublic, name, inheritance, body)
 
         for k,v in pairs(public.meta) do
             if binary_metamethods[k] then
-                object_mt[k] = function(...)
-                    return call_method(object, v, ...)
-                end
+                object_mt[k] = function(...) return call_method(object, v, ...) end
             else
-                object_mt[k] = function(_, ...)
-                    return call_method(object, v, ...)
-                end
+                object_mt[k] = function(_, ...) return call_method(object, v, ...) end
+            end
+        end
+        for k,v in pairs(protected.meta) do
+            if binary_metamethods[k] then
+                priv.__meta[k] = function(...) return call_method(object, v, ...) end
+            else
+                priv.__meta[k] = function(_, ...) return call_method(object, v, ...) end
+            end
+        end
+        for k,v in pairs(private.meta) do
+            if binary_metamethods[k] then
+                priv.__meta[k] = function(...) return call_method(object, v, ...) end
+            else
+                priv.__meta[k] = function(_, ...) return call_method(object, v, ...) end
             end
         end
 

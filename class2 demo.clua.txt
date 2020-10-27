@@ -1,7 +1,11 @@
 interface IContainer
 	function push
 	function pop
+    function clear optional
 	var count
+    function zero(addr)
+        self[addr] = 0
+    end
 end
 
 class Array implements IContainer
@@ -16,7 +20,7 @@ class Array implements IContainer
 			for i,v in ipairs(a) do tab[i] = v end
 			size = #tab
 		elseif type(a) == "number" and (b == nil or type(b) == "number") then
-			for i = 1, a do tab = b or 0 end
+			for i = 1, a do tab[i] = b or 0 end
 			size = a
 		elseif a ~= nil or b ~= nil then
 			error("invalid constructor with types (" .. type(a) .. ", " .. type(b) .. ")", 2)
