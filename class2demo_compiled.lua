@@ -1,3 +1,4 @@
+-- This file was reformatted to not look like a mess. Otherwise, the code is exactly as generated.
 local class = require "class2"
 local IContainer
 IContainer = class.interface 'IContainer' {
@@ -114,7 +115,7 @@ Array = class.class 'Array' {implements = {IContainer}} {
 }
 
 local a = Array {7, 1, 4, 9}
-for i, v in ipairs(a) do io.write(i .. " => " .. v .. "\n") end
+for i, v in pairs(a) do io.write(i .. " => " .. v .. "\n") end
 local b = Array.combine(a, Array(3, 12))
 for i = 1, b.count do io.write(b[i] .. ", ") end
 io.write("\n")
